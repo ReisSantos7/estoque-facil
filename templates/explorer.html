@@ -1,0 +1,15 @@
+{% extends 'base.html' %}{% block content %}
+<div class="eyebrow">BANCO DE DADOS · SOMENTE LEITURA</div>
+<h1>DBExplorer</h1><p>Consulte os dados reais do Estoque Fácil. Execute novamente para ver alterações feitas em outra aba.</p>
+<section class="panel sectionpad">
+<form method="get" class="searchrow"><div><label for="tabela">Tabela</label><select name="tabela" id="tabela">{% for t in tabelas %}<option {{ 'selected' if t==tabela else '' }}>{{ t }}</option>{% endfor %}</select></div><button>Abrir tabela</button></form>
+<details><summary>Campos de {{ tabela }}</summary><div class="tablewrap"><table><thead><tr><th>Campo</th><th>Tipo</th><th>Chave primária</th><th>Obrigatório</th></tr></thead><tbody>{% for c in colunas %}<tr><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[5] or '—' }}</td><td>{{ 'Sim' if c[3] or c[5] else 'Não' }}</td></tr>{% endfor %}</tbody></table></div></details>
+<form method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}"><input type="hidden" name="tabela" value="{{ tabela }}"><label for="sql">Consulta SQL</label><textarea id="sql" name="sql" rows="7" maxlength="20000" required spellcheck="false" style="font-family:monospace">{{ sql }}</textarea><div class="actions"><button>Executar / Atualizar consulta</button><span class="note">SELECT e WITH · até 500 linhas · até 2 segundos</span></div></form>
+</section>
+{% if resultado %}<section class="panel"><div class="tabletitle"><h2>Resultado</h2><span>{{ resultado.linhas|length }} linha(s) · {{ resultado.ms }} ms</span></div>{% if resultado.limitado %}<p class="note">Resultado limitado às primeiras 500 linhas. Use WHERE e ORDER BY para refinar.</p>{% endif %}<div class="tablewrap"><table><thead><tr>{% for c in resultado.colunas %}<th>{{ c }}</th>{% endfor %}</tr></thead><tbody>{% for row in resultado.linhas %}<tr>{% for v in row %}<td>{{ 'NULL' if v is none else v }}</td>{% endfor %}</tr>{% else %}<tr><td colspan="{{ resultado.colunas|length }}" class="empty">Consulta executada. Nenhum registro encontrado.</td></tr>{% endfor %}</tbody></table></div></section>{% endif %}
+<section class="panel sectionpad"><h2>Consulta de produtos e saldos</h2><p>Copie o exemplo para o editor. Notas ficam em TGFCAB; itens em TGFITE; configurações das operações em TGFTOP.</p><pre style="overflow:auto">SELECT P.CODPROD, P.DESCRPROD,
+       COALESCE(E.ESTOQUE, 0) AS ESTOQUE
+FROM TGFPRO P
+LEFT JOIN TGFEST E ON E.CODPROD = P.CODPROD
+ORDER BY P.CODPROD;</pre></section>
+{% endblock %}
